@@ -11,12 +11,12 @@
 #define UNIT 400
 
 #define AIM 3
-#define PUSH1 4
-#define PUSH2 5
+#define PUSH1 11
+#define PUSH2 12
 #define DETECT 6
-#define ROTATE 7
+#define ROTATE 9
 #define FETCH 10
-#define SEIZE 9
+#define SEIZE 11
 #define TrigPin 26
 #define EchoPin 28
 
@@ -39,7 +39,7 @@ const int ROUTINE[18][2] = {
 int line[2];
 int sequence = 0;//第几个点
 float location[2] = { 60,3200 };//初始坐标 
-int destination[2] = { 700,3000 };
+int destination[2] = { 700,3200 };
 float dismodPre = 9999999;
 
 /*车头往右偏angle减小
@@ -67,9 +67,9 @@ void setup() {
   Serial.begin(9600);
 
   aim.attach(AIM);
-  detect.attach(DETECT);
-  push1.attach(PUSH1);
-  push2.attach(PUSH2);
+  //detect.attach(DETECT);
+  //push1.attach(PUSH1);
+  //push2.attach(PUSH2);
  
   attachInterrupt(0, speedMonitor, RISING);//霍尔编码器A相，上升沿触发，2
   //attachInterrupt(2, countline, RISING);//21
@@ -103,14 +103,14 @@ void loop() {
 	{
 		switch (sequence)
 		{
-		case 2:
+		case 0:
 			motor.setSpeed(255, STOP);
 			while (1)
 			{
 				delay(10000);
 			}
 			break;
-		case 15:
+		/*case 15:
 			//机械臂放置夹取
 			motor.setSpeed(100, STOP);
 			grab();
@@ -128,12 +128,12 @@ void loop() {
 				delay(10000);
 			}
 			break;
-		}
+		}*/
 
 		nextflag = 1;
 	}
 
-	if (dismod - dismodPre > 500)
+	if (dismod - dismodPre > CLOSE)
 	{
 		nextflag = 1;
 	}
@@ -151,29 +151,36 @@ void loop() {
 	else
 		dismodPre = dismod;
 	
-	direct = -atan(distance[1] / distance[0])*ANG + angle*ANG + 80;
-	Serial3.print("direct:");
-	Serial3.print(direct);
+	if (distance[0] < 0)
+	{
+		if(distance[1]<0)
+			direct = -atan(distance[1] / distance[0])*ANG + angle*ANG - 100;
+		else
+			direct = -atan(distance[1] / distance[0])*ANG + angle*ANG + 260;
+	}
+	else
+		direct = -atan(distance[1] / distance[0])*ANG + angle*ANG + 80;
+
+	Serial.print("direct:");
+	Serial.print(direct);
+
 	if (direct > 110)
 		direct = 110;
 	else if (direct < 50)
 		direct = 50;
 
 	aim.write(direct);
-	detect.write(170 - direct);
+	//detect.write(90);
+	//detect.write(170 - direct);
 
-	if (Serial3.available())
-	{
-		motor.setSpeed(200, FORWARD);
-	}
+	motor.setSpeed(255, FORWARD);
 
-	Serial3.print("angle:");
-	Serial3.println(angle*ANG);
-	
-	Serial3.print("x");
-	Serial3.print(location[0]);
-	Serial3.print("y");
-	Serial3.println(location[1]);
+	Serial.print("angle:");
+	Serial.print(angle*ANG);
+	Serial.print("x");
+	Serial.print(location[0]);
+	Serial.print("y");
+	Serial.println(location[1]);
 
 	if (sequence > 3)
 	{

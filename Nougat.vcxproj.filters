@@ -26,19 +26,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="avoid.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="grab.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="motorSpeed.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="posture.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="push.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
