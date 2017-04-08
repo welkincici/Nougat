@@ -2,8 +2,8 @@
 #include "motorSpeed.h"
 #include "posture.c"
 //#include "avoid.c"
-#include "grab.c"
-#include "push.c"
+//#include "grab.c"
+//#include "push.c"
 //This is a test
 #define ANG 57.32
 #define CLOSE 500
@@ -23,12 +23,12 @@
 MOTOR motor(8, 22, 24);	//定义电机对象
 //SR04 ultro(TrigPin, EchoPin);
 Servo aim;
-Servo detect;
-Servo push1;
-Servo push2;
-Servo rotate;
-Servo fetch;
-Servo seize;
+//Servo detect;
+//Servo push1;
+//Servo push2;
+//Servo rotate;
+//Servo fetch;
+//Servo seize;
 
 //地图
 const int ROUTINE[18][2] = {
