@@ -4,31 +4,31 @@
 //#include "avoid.c"
 //#include "grab.c"
 //#include "push.c"
-//This is a test
 #define ANG 57.32
-#define CLOSE 500
+#define CLOSE 1000
 #define WARNING 30
 #define UNIT 400
+#define BEGIN 99999999999
 
-#define AIM 3
-#define PUSH1 11
-#define PUSH2 12
-#define DETECT 6
-#define ROTATE 9
-#define FETCH 10
-#define SEIZE 11
+#define AIM 7
+#define PUSH1 8
+#define PUSH2 9
+#define DETECT 10
+#define ROTATE 12
+#define FETCH 11
+#define SEIZE 13
 #define TrigPin 26
 #define EchoPin 28
 
-MOTOR motor(8, 22, 24);	//定义电机对象
+MOTOR motor(4, 22, 24);	//定义电机对象
 //SR04 ultro(TrigPin, EchoPin);
 Servo aim;
-//Servo detect;
-//Servo push1;
-//Servo push2;
-//Servo rotate;
-//Servo fetch;
-//Servo seize;
+Servo detect;
+Servo push1;
+Servo push2;
+Servo rotate;
+Servo fetch;
+Servo seize;
 
 //地图
 const int ROUTINE[18][2] = {
@@ -39,12 +39,13 @@ const int ROUTINE[18][2] = {
 int line[2];
 int sequence = 0;//第几个点
 float location[2] = { 60,3200 };//初始坐标 
-int destination[2] = { 700,3200 };
-float dismodPre = 9999999;
+int destination[2] = { 700,3000 };
+float dismodPre = BEGIN;
 
 /*车头往右偏angle减小
-舵机往右偏增大，中间角度为80
-超声波和舵机相反，中间角度为90*/
+舵机往右偏增大，中间角度为80,左右极限为45-120
+超声波和舵机相反，中间角度为90
+机械臂rotate中间70*/
 
 void speedMonitor(void)		//测速中断函数
 {
@@ -67,12 +68,21 @@ void setup() {
   Serial.begin(9600);
 
   aim.attach(AIM);
-  //detect.attach(DETECT);
-  //push1.attach(PUSH1);
-  //push2.attach(PUSH2);
+  detect.attach(DETECT);
+  push1.attach(PUSH1);
+  push2.attach(PUSH2);
+  //rotate.attach(ROTATE);
+  //fetch.attach(FETCH);
+  //seize.attach(SEIZE);
  
   attachInterrupt(0, speedMonitor, RISING);//霍尔编码器A相，上升沿触发，2
-  //attachInterrupt(2, countline, RISING);//21
+  //attachInterrupt(1, countline, RISING);//3
+
+  push1.write(50);
+  push2.write(50);
+  //rotate.write(70);
+  //fetch.write(90);
+  //seize.write(50);
 
   int i;
   for (i = 0; i < 5; i++)
@@ -103,7 +113,7 @@ void loop() {
 	{
 		switch (sequence)
 		{
-		case 0:
+		case 3:
 			motor.setSpeed(255, STOP);
 			while (1)
 			{
@@ -127,8 +137,8 @@ void loop() {
 			{
 				delay(10000);
 			}
-			break;
-		}*/
+			break;*/
+		}
 
 		nextflag = 1;
 	}
@@ -146,7 +156,7 @@ void loop() {
 		destination[1] = ROUTINE[sequence][1];
 		distance[0] = destination[0] - location[0];
 		distance[1] = destination[1] - location[1];
-		dismodPre = 9999999;
+		dismodPre = BEGIN;
 	}
 	else
 		dismodPre = dismod;
@@ -161,26 +171,26 @@ void loop() {
 	else
 		direct = -atan(distance[1] / distance[0])*ANG + angle*ANG + 80;
 
-	Serial.print("direct:");
-	Serial.print(direct);
+	//Serial.print("direct:");
+	//Serial.println(direct);
 
-	if (direct > 110)
+
+	if (direct > 120)
 		direct = 110;
-	else if (direct < 50)
-		direct = 50;
+	else if (direct < 45)
+		direct = 45;
 
 	aim.write(direct);
-	//detect.write(90);
-	//detect.write(170 - direct);
+	detect.write(170 - direct);
 
 	motor.setSpeed(255, FORWARD);
 
-	Serial.print("angle:");
-	Serial.print(angle*ANG);
+	/*Serial.print("angle:");
+	Serial.println(angle*ANG);
 	Serial.print("x");
 	Serial.print(location[0]);
 	Serial.print("y");
-	Serial.println(location[1]);
+	Serial.println(location[1]);*/
 
 	if (sequence > 3)
 	{

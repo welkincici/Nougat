@@ -12,7 +12,7 @@
 #define BACKWARD 1
 #define STOP 2
 #define BRAKE 3
-#define STEP 0.64
+#define STEP 0.67
 class MOTOR {
 public:
 	MOTOR(uint8_t ENA, uint8_t IN1,uint8_t IN2);//¹¹Ôìº¯Êý
