@@ -1,14 +1,17 @@
 #include <Servo.h>
 #include "motorSpeed.h"
 #include "posture.c"
+//#include "bump.c"
 //#include "avoid.c"
 //#include "grab.c"
 //#include "push.c"
 #define ANG 57.32
-#define CLOSE 1000
+#define ARRIVE 50
+#define CLOSE 50
+#define NEAR 150
 #define WARNING 30
 #define UNIT 400
-#define BEGIN 99999999999
+#define BEGIN 999999
 
 #define AIM 7
 #define PUSH1 8
@@ -19,6 +22,7 @@
 #define SEIZE 13
 #define TrigPin 26
 #define EchoPin 28
+#define PULSE 49
 
 MOTOR motor(4, 22, 24);	//定义电机对象
 //SR04 ultro(TrigPin, EchoPin);
@@ -32,14 +36,16 @@ Servo seize;
 
 //地图
 const int ROUTINE[18][2] = {
-	{ 700,3000 },{ 2300,2800 },{ 2500,2000 },
-	{ 2400,1200 },{ 800,1200 },{ 400,2000 },
-	{ 1200,2400 },{ 1600,3200 },{ 1600,3600 }
+	{ 800,3000 },{ 1800,2700 },{ 2300,2800 },
+	{ 2500,2600 },{ 2400,1800 },
+	{ 800,1200 },{ 1200,2400 },
+	{ 1600,3200 },{ 1600,3600 }
 };
-int line[2];
+//int line[2];
+//bool driveFlag;
 int sequence = 0;//第几个点
-float location[2] = { 60,3200 };//初始坐标 
-int destination[2] = { 700,3000 };
+int destination[2] = { 1200,800 };
+float location[2] = { 0,3200 };//初始坐标 
 float dismodPre = BEGIN;
 
 /*车头往右偏angle减小
@@ -49,17 +55,16 @@ float dismodPre = BEGIN;
 
 void speedMonitor(void)		//测速中断函数
 {
-	location[0] += STEP*cos(angle);
-	location[1] += STEP*sin(angle);
+	location[0] += STEP*cosx;
+	location[1] += STEP*sinx;
 }
-
-void countline(void)
+/*void countline(void)
 {
-	if (abs(line[0] - location[0]) > abs(line[1] - location[0]))
-		line[0] = (int)(location[0] / 400 + 0.5)*UNIT;
+	if (abs((int)location[1]%400-200) < abs((int)location[0] % 400 - 200))
+		location[0] = (int)(location[0] / 400 + 0.5)*UNIT;
 	else
-		line[1] = (int)(location[1] / 400 + 0.5)*UNIT;
-}
+		location[1] = (int)(location[1] / 400 + 0.5)*UNIT;
+}*/
 
 void setup() {
 
@@ -68,9 +73,9 @@ void setup() {
   Serial.begin(9600);
 
   aim.attach(AIM);
-  detect.attach(DETECT);
-  push1.attach(PUSH1);
-  push2.attach(PUSH2);
+  //detect.attach(DETECT);
+  //push1.attach(PUSH1);
+  //push2.attach(PUSH2);
   //rotate.attach(ROTATE);
   //fetch.attach(FETCH);
   //seize.attach(SEIZE);
@@ -78,12 +83,9 @@ void setup() {
   attachInterrupt(0, speedMonitor, RISING);//霍尔编码器A相，上升沿触发，2
   //attachInterrupt(1, countline, RISING);//3
 
-  push1.write(50);
-  push2.write(50);
-  //rotate.write(70);
-  //fetch.write(90);
-  //seize.write(50);
+  //pinMode(PULSE, INPUT);
 
+  delay(500);
   int i;
   for (i = 0; i < 5; i++)
   {
@@ -94,10 +96,10 @@ void setup() {
 }
 
 void loop() {
-
-	posture();
-
 	//avoid();
+	/*if(driveFlag==1)
+		bump();*/
+	posture();
 
 	float distance[2];
 	float dismod;
@@ -107,18 +109,14 @@ void loop() {
 	distance[0] = destination[0] - location[0];
 	distance[1] = destination[1] - location[1];
 
-	dismod = distance[0] * distance[0] + distance[1] * distance[1];
+	dismod = abs(distance[0]) + abs(distance[1]);
 
-	if (dismod<CLOSE)
+	if (dismod<ARRIVE)
 	{
 		switch (sequence)
 		{
-		case 3:
-			motor.setSpeed(255, STOP);
-			while (1)
-			{
-				delay(10000);
-			}
+		case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 7:case 8:
+			//Serial3.println("GOOD");
 			break;
 		/*case 15:
 			//机械臂放置夹取
@@ -143,59 +141,78 @@ void loop() {
 		nextflag = 1;
 	}
 
-	if (dismod - dismodPre > CLOSE)
+	if (dismod < dismodPre)
+	{
+		dismodPre = dismod;
+	}
+
+	if (dismod - dismodPre > CLOSE&& dismod <400)
 	{
 		nextflag = 1;
+		//Serial3.println("SKIP");
 	}
 
 	if (nextflag)
 	{
-		
 		sequence++;
 		destination[0] = ROUTINE[sequence][0];
 		destination[1] = ROUTINE[sequence][1];
 		distance[0] = destination[0] - location[0];
 		distance[1] = destination[1] - location[1];
 		dismodPre = BEGIN;
+		//motor.setSpeed(255, STOP);
+		//driveFlag = false;
+		//delay(1000);
 	}
-	else
-		dismodPre = dismod;
 	
-	if (distance[0] < 0)
-	{
-		if(distance[1]<0)
-			direct = -atan(distance[1] / distance[0])*ANG + angle*ANG - 100;
-		else
-			direct = -atan(distance[1] / distance[0])*ANG + angle*ANG + 260;
-	}
-	else
-		direct = -atan(distance[1] / distance[0])*ANG + angle*ANG + 80;
+	direct = -atan2(distance[1], distance[0])*ANG + angle*ANG + 80;
 
-	//Serial.print("direct:");
-	//Serial.println(direct);
-
-
-	if (direct > 120)
-		direct = 110;
-	else if (direct < 45)
-		direct = 45;
-
-	aim.write(direct);
-	detect.write(170 - direct);
-
-	motor.setSpeed(255, FORWARD);
-
-	/*Serial.print("angle:");
-	Serial.println(angle*ANG);
+	/*Serial.print("sequence:");
+	Serial.print(sequence);
 	Serial.print("x");
 	Serial.print(location[0]);
 	Serial.print("y");
-	Serial.println(location[1]);*/
+	Serial.println(location[1]);
+	Serial.print("angle");
+	Serial.println(angle);
+	Serial.print("direct");
+	Serial.println(direct);*/
+	/*Serial3.print("sequence:");
+	Serial3.print(sequence);
+	Serial3.print("x");
+	Serial3.print(location[0]);
+	Serial3.print("y");
+	Serial3.println(location[1]);
+	Serial3.print("direct");
+	Serial3.println(direct);*/
 
-	if (sequence > 3)
+	if (direct > 260)
+		direct = direct - 360;
+	else if (direct < -100)
+		direct = direct + 360;
+
+	if (direct > 120)
+		direct = 120;
+	else if (direct < 45)
+		direct = 45;
+
+	if(dismod>NEAR)
+		aim.write(direct);
+	//detect.write(170 - direct);
+
+	/*if (Serial3.read()=='g')
 	{
-		Serial3.println("boom");
+		motor.setSpeed(255, FORWARD);
+	}*/
+	motor.setSpeed(255, FORWARD);
+
+	//motor.setSpeed(255, FORWARD);
+	//driveFlag = true;
+
+	if (sequence > 0)
+	{
 		motor.setSpeed(255, STOP);
+		//driveFlag = false;
 		while (1)
 		{
 			delay(10000);

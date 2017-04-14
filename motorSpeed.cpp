@@ -8,7 +8,6 @@ void speedMonitor(void)
 {
 	pulseCount++;
 }*/
-
 MOTOR::MOTOR(uint8_t ENA, uint8_t IN1, uint8_t IN2)//¹¹Ôìº¯Êý
 {
 	ena = ENA;
