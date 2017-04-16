@@ -36,16 +36,16 @@ Servo seize;
 
 //地图
 const int ROUTINE[18][2] = {
-	{ 800,3000 },{ 1800,2700 },{ 2300,2800 },
-	{ 2500,2600 },{ 2400,1800 },
-	{ 800,1200 },{ 1200,2400 },
-	{ 1600,3200 },{ 1600,3600 }
+	{ 800,3000 },{ 2400,2800 },
+	{ 3100,2400 } ,{ 2900,1000 },
+	{ 1000,1200 },{ 1200,2400 },
+	{ 2000,4000 }
 };
 //int line[2];
 //bool driveFlag;
 int sequence = 0;//第几个点
-int destination[2] = { 1200,800 };
-float location[2] = { 0,3200 };//初始坐标 
+int destination[2] = { 800,2900 };
+float location[2] = { 60,3200 };//初始坐标 
 float dismodPre = BEGIN;
 
 /*车头往右偏angle减小
@@ -209,7 +209,7 @@ void loop() {
 	//motor.setSpeed(255, FORWARD);
 	//driveFlag = true;
 
-	if (sequence > 0)
+	if (sequence > 6)
 	{
 		motor.setSpeed(255, STOP);
 		//driveFlag = false;
