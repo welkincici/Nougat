@@ -21,7 +21,6 @@ Servo collect2;
 
 //地图
 const int ROUTINE[18][2] = {
-	{ 2400,3200 },{ 3000,2800 },
 	{ 600,3000 },{ 2400,2800 },
 	{ 3100,2400 } ,{ 2900,1000 },
 	{ 1000,1200 },{ 1200,2400 },
@@ -32,7 +31,7 @@ extern int driveFlag;
 int lineFlag;
 float lineLocation[2], lineAngle;
 int sequence = 0;//第几个点
-int destination[2] = { 2400,3200 };
+int destination[2] = { 600,3000 };
 float location[2] = { 20,3200 };//初始坐标 
 float dismodPre = BEGIN;
 float locationSample[2];
