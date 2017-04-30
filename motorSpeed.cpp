@@ -3,6 +3,7 @@
 // 
 
 #include "motorSpeed.h"
+int driveFlag = STOP;
 /*uint16_t pulseCount;
 void speedMonitor(void)
 {
@@ -30,14 +31,17 @@ void MOTOR::setSpeed(uint8_t speed, uint8_t state)
 	case FORWARD:
 		digitalWrite(in1, LOW);
 		digitalWrite(in2, HIGH);
+		driveFlag = FORWARD;
 		break;
 	case BACKWARD:
 		digitalWrite(in2, LOW);
 		digitalWrite(in1, HIGH);
+		driveFlag = -1;
 		break;
 	case STOP:
 		digitalWrite(in2, HIGH);
 		digitalWrite(in1, HIGH);
+		driveFlag = STOP;
 		break;
 	case BRAKE:analogWrite(ena, LOW);
 		break;

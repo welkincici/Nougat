@@ -8,10 +8,10 @@
 #else
 	#include "WProgram.h"
 #endif
-#define FORWARD 0
-#define BACKWARD 1
-#define STOP 2
-#define BRAKE 3
+#define FORWARD 1
+#define BACKWARD 3
+#define STOP 0
+#define BRAKE 2
 #define STEP 0.64
 class MOTOR {
 public:
