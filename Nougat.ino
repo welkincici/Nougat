@@ -12,6 +12,7 @@
 #define COLLECT1 9
 #define COLLECT2 8
 #define PULSE 49
+#define DISK A15
 
 MOTOR motor(12, 47, 46);	//定义电机对象
 Servo aim;
@@ -21,20 +22,21 @@ Servo collect2;
 
 //地图
 const int ROUTINE[18][2] = {
-	{ 600,3000 },{ 2400,2800 },
+	{ 1820,2600 },{ 20,3200 },
+	{ 800,3000 },{ 2400,2800 },
 	{ 3100,2400 } ,{ 2900,1000 },
 	{ 1000,1200 },{ 1200,2400 },
 	{ 2000,4000 }
 };
 //unsigned long myclock;
 extern int driveFlag;
-int lineFlag;
+int lineFlag = 0, diskFlag, reverseFlag;
+unsigned long recordClock, reverseClock;
 float lineLocation[2], lineAngle;
 int sequence = 0;//第几个点
-int destination[2] = { 600,3000 };
+int destination[2] = { 1820,2600 };
 float location[2] = { 20,3200 };//初始坐标 
 float dismodPre = BEGIN;
-float locationSample[2];
 
 /*车头往右偏angle减小
 舵机往右偏增大，中间角度为80,左右极限为45-115
@@ -42,8 +44,8 @@ float locationSample[2];
 
 void speedMonitor(void)		//测速中断函数
 {
-	location[0] += STEP*cosx*driveFlag;
-	location[1] += STEP*sinx*driveFlag;
+	//location[0] += STEP*cosx*driveFlag;
+	//location[1] += STEP*sinx*driveFlag;
 }
 
 void countline(void)
@@ -56,6 +58,9 @@ void countline(void)
 
 void setup() {
 
+  collect1.write(130);
+  collect2.write(30);
+
   Serial2.begin(9600);  
   Serial3.begin(38400);
   Serial.begin(9600);
@@ -65,12 +70,13 @@ void setup() {
   collect1.attach(COLLECT1);
   collect2.attach(COLLECT2);
  
-  attachInterrupt(0, speedMonitor, RISING);//霍尔编码器A相，上升沿触发，2
-  attachInterrupt(1, countline, RISING);//3
+  motor.setSpeed(255, FORWARD);
+  //attachInterrupt(0, speedMonitor, RISING);//霍尔编码器A相，上升沿触发，2
+  //attachInterrupt(1, countline, RISING);//3
 
-  collect1.write(140);
-  collect2.write(30);
-
+  pinMode(DISK, INPUT);
+  diskFlag = digitalRead(DISK);
+  
   int i;
   for (i = 0; i < 5; i++)
   {
@@ -100,7 +106,29 @@ void loop() {
 	float distance[2];
 	float dismod;
 	float direct;
+	int disk;
 	
+	disk = digitalRead(DISK);
+	if (disk ^ diskFlag)
+	{
+		location[0] += fSTEP*cosx*driveFlag;
+		location[1] += fSTEP*sinx*driveFlag;
+		diskFlag = disk;
+		recordClock = millis();
+	}
+
+	if (millis() - recordClock > 1000)
+	{
+		reverseFlag = 1;
+		reverseClock = millis();
+	}
+
+	if (millis() - reverseClock > 1000)
+	{
+		reverseFlag = 0;
+	}
+		
+
 	distance[0] = destination[0] - location[0];
 	distance[1] = destination[1] - location[1];
 
@@ -137,39 +165,31 @@ void loop() {
 		aim.write(direct);
 	}
 	detect.write(170 - direct);
-	
-	if (!millis() % 1000)
-	{
-		locationSample[0] = location[0];
-		locationSample[1] = location[1];
-	}
 
-	if (driveFlag && abs(locationSample[0] - location[0]) < 50 && abs(locationSample[1] - location[1])<50)
+	switch (sequence)
 	{
-		motor.setSpeed(255, 2 - driveFlag);
-	}
-	else
-		switch (sequence)
+	case 0:
+		/*if (millis() > 500)
 		{
-		case 0:
-			if (millis() > 500)
-			{
-				collect1.write(25);
-				collect2.write(145);
-			}
-			motor.setSpeed(255, FORWARD);
-			break;
-		case 2:
-			motor.setSpeed(255, STOP);
-			while (1)
-			{
-				delay(500);
-			}
-			break;
-		default:
-			motor.setSpeed(255, FORWARD);
-			break;
+		collect1.write(25);
+		collect2.write(150);
+		}*/
+		motor.setSpeed(255, reverseFlag ? BACKWARD : FORWARD);
+		break;
+	case 1:
+		motor.setSpeed(255, reverseFlag ? FORWARD : BACKWARD);
+		break;
+	case 2:
+		motor.setSpeed(255, STOP);
+		while (1)
+		{
+			delay(500);
 		}
+		break;
+	default:
+		motor.setSpeed(255, FORWARD);
+		break;
+	}
 
 	/*while (Serial3.available())
 	{

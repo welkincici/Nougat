@@ -13,6 +13,7 @@
 #define STOP 0
 #define BRAKE 2
 #define STEP 0.64
+#define fSTEP 34.5
 class MOTOR {
 public:
 	MOTOR(uint8_t ENA, uint8_t IN1,uint8_t IN2);//¹¹Ôìº¯Êý
