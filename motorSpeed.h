@@ -12,7 +12,7 @@
 #define BACKWARD 3
 #define STOP 0
 #define BRAKE 2
-#define STEP 0.64
+//#define STEP 0.64
 #define fSTEP 34.5
 class MOTOR {
 public:
